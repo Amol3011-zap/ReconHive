@@ -29,13 +29,14 @@ def success_response(data: Any = None, message: str = None) -> dict:
     }
 
 
-def error_response(error: str, message: str = None) -> dict:
-    """Create an error response."""
-    return {
+def error_response(error: str, message: str = None, status_code: int = 400) -> dict:
+    """Create an error response and raise HTTPException."""
+    from fastapi import HTTPException
+    raise HTTPException(status_code=status_code, detail={
         "success": False,
         "error": error,
         "message": message,
-    }
+    })
 
 
 def paginated_response(items: List[Any], total: int, skip: int, limit: int) -> dict:
