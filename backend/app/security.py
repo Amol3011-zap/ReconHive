@@ -1,5 +1,6 @@
 from fastapi import HTTPException, Depends, Security
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
+from fastapi.security import HTTPBearer
+from fastapi.security.http import HTTPAuthCredentials
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from app.config import settings
