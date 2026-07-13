@@ -53,18 +53,3 @@ function getToken(): string {
   if (typeof window === 'undefined') return '';
   return localStorage.getItem('token') || 'demo-token';
 }
-
-// Mock data for demo (when API is unavailable)
-export const mockData = {
-  engagements: [
-    { id: '1', name: 'Acme Corp Internal Test', target: 'acme.com', status: 'ACTIVE', type: 'PENETRATION_TEST', created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-    { id: '2', name: 'Beta Finance Security Audit', target: 'betafinance.io', status: 'ACTIVE', type: 'VULNERABILITY_ASSESSMENT', created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-    { id: '3', name: 'DataCorp Web App Assessment', target: 'data.example.com', status: 'COMPLETED', type: 'PENETRATION_TEST', created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-  ],
-  assets: 4231,
-  scans: 7,
-  findings: 156,
-  criticalFindings: 9,
-  evidence: 156,
-  aiInsights: 4,
-};

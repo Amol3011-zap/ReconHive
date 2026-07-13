@@ -1,10 +1,9 @@
 from fastapi import HTTPException, Depends, Security
 from fastapi.security import HTTPBearer
-from fastapi.security.http import HTTPAuthCredentials
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from app.config import settings
-from typing import Optional
+from typing import Optional, Any
 
 security = HTTPBearer()
 
@@ -18,7 +17,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
-async def verify_token(credentials: HTTPAuthCredentials = Security(security)) -> dict:
+async def verify_token(credentials: Any = Security(security)) -> dict:
     """Verify JWT token and return claims."""
     token = credentials.credentials
     try:

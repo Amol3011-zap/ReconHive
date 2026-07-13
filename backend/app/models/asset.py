@@ -63,7 +63,7 @@ class Asset(Base):
 
     risk_score = Column(Float, default=0.0, index=True)
     scan_history = Column(JSON)
-    metadata = Column(JSON)
+    custom_metadata = Column(JSON)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

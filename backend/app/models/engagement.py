@@ -49,6 +49,9 @@ class Engagement(Base):
     scans = relationship("Scan", back_populates="engagement", cascade="all, delete-orphan")
     evidence = relationship("Evidence", back_populates="engagement", cascade="all, delete-orphan")
     findings = relationship("Finding", back_populates="engagement", cascade="all, delete-orphan")
+    ai_targets = relationship("AITarget", back_populates="engagement", cascade="all, delete-orphan")
+    ai_assessments = relationship("AIAssessment", back_populates="engagement", cascade="all, delete-orphan")
+    ai_findings = relationship("AIFinding", back_populates="engagement", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("ix_engagements_status", "status"),

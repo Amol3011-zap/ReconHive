@@ -6,6 +6,12 @@ from app.models.job import Job, JobStatus
 from app.models.plugin import PluginRegistration
 from app.models.evidence import Evidence, EvidenceType
 from app.models.finding import Finding, Severity, FindingStatus
+from app.models.worker import Worker, WorkerStatus, WorkerType
+from app.models.ai_assessment import (
+    AITarget, AIAssessment, AIFinding, AIEvidence,
+    PromptTest, RAGTest, ToolTest,
+    AITargetType, AIAssessmentType, AISeverity
+)
 
 __all__ = [
     "Engagement", "EngagementStatus", "EngagementType",
@@ -16,4 +22,8 @@ __all__ = [
     "PluginRegistration",
     "Evidence", "EvidenceType",
     "Finding", "Severity", "FindingStatus",
+    "Worker", "WorkerStatus", "WorkerType",
+    "AITarget", "AIAssessment", "AIFinding", "AIEvidence",
+    "PromptTest", "RAGTest", "ToolTest",
+    "AITargetType", "AIAssessmentType", "AISeverity",
 ]

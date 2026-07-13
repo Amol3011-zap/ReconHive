@@ -42,7 +42,7 @@ class Evidence(Base):
 
     preview_data = Column(Text)
     tags = Column(JSON)
-    metadata = Column(JSON)
+    custom_metadata = Column(JSON)
 
     created_by = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

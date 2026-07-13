@@ -1,16 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { Table } from '@/components/Table';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
 export default function EngagementsPage() {
-  const [engagements] = useState([
-    { id: '1', name: 'Acme Corp Internal Test', client: 'Acme Corp', status: 'Active', type: 'Penetration Test', started: '2026-07-06', ended: '2026-08-06' },
-    { id: '2', name: 'Beta Finance Security Audit', client: 'Beta Finance', status: 'Active', type: 'Vulnerability Assessment', started: '2026-07-08', ended: '2026-07-28' },
-    { id: '3', name: 'DataCorp Web App Assessment', client: 'DataCorp', status: 'Completed', type: 'Penetration Test', started: '2026-06-13', ended: '2026-06-30' },
-    { id: '4', name: 'TechStart API Security Review', client: 'TechStart', status: 'Completed', type: 'Code Review', started: '2026-06-01', ended: '2026-06-15' },
-  ]);
+  const [engagements, setEngagements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadEngagements = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/engagements`, {
+          headers: { 'Authorization': 'Bearer demo-token' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setEngagements(data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to load engagements:', error);
+        setEngagements([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadEngagements();
+  }, []);
 
   return (
     <MainLayout title="Engagements" subtitle="Manage your security assessments and engagements">

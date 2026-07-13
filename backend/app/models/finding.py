@@ -50,7 +50,7 @@ class Finding(Base):
 
     references = Column(JSON)
     labels = Column(JSON)
-    metadata = Column(JSON)
+    custom_metadata = Column(JSON)
 
     detected_by = Column(String(255))
     verified_by = Column(String(255))

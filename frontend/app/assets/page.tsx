@@ -1,18 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { Table } from '@/components/Table';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
 export default function AssetsPage() {
-  const [assets] = useState([
-    { id: '1', name: 'app.acme.com', type: 'Web App', criticality: 'Critical', status: 'Active', tags: 'production, public' },
-    { id: '2', name: 'api.acme.com', type: 'API', criticality: 'Critical', status: 'Active', tags: 'production, payment' },
-    { id: '3', name: 'mail.acme.com', type: 'Mail Server', criticality: 'High', status: 'Active', tags: 'internal, critical' },
-    { id: '4', name: 'paymentapp.acme.com', type: 'Web App', criticality: 'Critical', status: 'Active', tags: 'production, payment' },
-    { id: '5', name: 'db.internal', type: 'Database', criticality: 'High', status: 'Active', tags: 'internal, database' },
-    { id: '6', name: 'vpn.acme.com', type: 'VPN Server', criticality: 'High', status: 'Active', tags: 'internal, access' },
-  ]);
+  const [assets, setAssets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadAssets = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/assets`, {
+          headers: { 'Authorization': 'Bearer demo-token' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAssets(data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to load assets:', error);
+        setAssets([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAssets();
+  }, []);
 
   return (
     <MainLayout title="Assets" subtitle="Inventory of all assessed assets">

@@ -1,27 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
 export default function ReportsPage() {
-  const [reports] = useState([
-    {
-      id: '1',
-      name: 'Acme Corp - Q3 Pentest Report',
-      engagement: 'Acme Corp Internal Test',
-      created: '2026-07-12',
-      findings: 9,
-      sections: ['Executive Summary', 'Scope', 'Findings', 'Remediation'],
-    },
-    {
-      id: '2',
-      name: 'DataCorp - Final Assessment Report',
-      engagement: 'DataCorp Web App Assessment',
-      created: '2026-07-01',
-      findings: 23,
-      sections: ['Executive Summary', 'Scope', 'Findings', 'Evidence', 'Remediation'],
-    },
-  ]);
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/reports`, {
+          headers: { 'Authorization': 'Bearer demo-token' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setReports(data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to load reports:', error);
+        setReports([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadReports();
+  }, []);
 
   return (
     <MainLayout title="Reports" subtitle="Generate and download assessment reports">

@@ -23,7 +23,7 @@ class Target(Base):
     is_in_scope = Column(Boolean, default=True, index=True)
     priority = Column(String(20), default="medium")
 
-    metadata = Column(JSON)
+    custom_metadata = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

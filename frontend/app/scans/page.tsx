@@ -1,116 +1,141 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
-import { Table } from '@/components/Table';
 import { Modal } from '@/components/Modal';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
 export default function ScansPage() {
+  const [scans, setScans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showNewScan, setShowNewScan] = useState(false);
-  const [selectedScan, setSelectedScan] = useState<string | null>(null);
+  const [selectedScan, setSelectedScan] = useState<any | null>(null);
+  const [scanDetails, setScanDetails] = useState<any | null>(null);
+  const [engagementId] = useState('550e8400-e29b-41d4-a716-446655440000');
 
-  const [scans] = useState([
-    {
-      id: '1',
-      name: 'Nuclei - Web Scan',
-      plugin: 'Nuclei',
-      target: 'app.acme.com',
-      status: 'Running',
-      progress: 79,
-      started: '2026-07-13 10:00',
-      duration: '01:42:30',
-      worker: 'worker-2',
-      stages: ['Initialize', '✓ Target validation', '✓ Template loading', '→ Scanning', 'Reporting'],
-      logs: [
-        '[10:00] Scan started',
-        '[10:05] Loaded 500 templates',
-        '[10:12] Found 12 vulnerabilities',
-        '[10:34] Database updated',
-        '[11:42] Scan 79% complete',
-      ]
-    },
-    {
-      id: '2',
-      name: 'Subdomain Discovery',
-      plugin: 'Subfinder',
-      target: 'acme.com',
-      status: 'Running',
-      progress: 45,
-      started: '2026-07-13 09:52',
-      duration: '01:34:22',
-      worker: 'worker-1',
-      stages: ['Initialize', '✓ DNS queries', '→ Enumeration', 'Filtering', 'Reporting'],
-      logs: [
-        '[09:52] Starting subdomain enumeration',
-        '[10:01] Found 45 subdomains',
-        '[10:15] Filtering duplicates',
-        '[11:26] 45% complete',
-      ]
-    },
-    {
-      id: '3',
-      name: 'Nmap - Full Scan',
-      plugin: 'Nmap',
-      target: 'acme.com',
-      status: 'Running',
-      progress: 30,
-      started: '2026-07-13 09:47',
-      duration: '01:39:45',
-      worker: 'worker-3',
-      stages: ['Initialize', '✓ Host discovery', '→ Port scanning', 'Service detection', 'Reporting'],
-      logs: [
-        '[09:47] Port scan started',
-        '[10:02] Discovered 150 hosts',
-        '[11:27] 30% complete',
-      ]
-    },
-    {
-      id: '4',
-      name: 'DNS Enumeration',
-      plugin: 'dig',
-      target: 'acme.com',
-      status: 'Completed',
-      progress: 100,
-      started: '2026-07-13 08:00',
-      duration: '00:45:32',
-      worker: 'worker-1',
-      stages: ['✓ Initialize', '✓ DNS queries', '✓ Results', '✓ Reporting'],
-      logs: [
-        '[08:00] DNS enumeration started',
-        '[08:15] Completed',
-        '[08:45] Report generated',
-      ]
-    },
-    {
-      id: '5',
-      name: 'SSL/TLS Assessment',
-      plugin: 'testssl.sh',
-      target: 'paymentapp.acme.com',
-      status: 'Completed',
-      progress: 100,
-      started: '2026-07-13 07:30',
-      duration: '00:30:15',
-      worker: 'worker-2',
-      stages: ['✓ Initialize', '✓ Scan', '✓ Analysis', '✓ Reporting'],
-      logs: [
-        '[07:30] SSL/TLS scan started',
-        '[07:35] Detected TLS 1.2',
-        '[07:50] Found weak cipher suites',
-        '[08:00] Report complete',
-      ]
-    },
-  ]);
+  useEffect(() => {
+    loadScans();
+    const interval = setInterval(loadScans, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const currentScan = scans.find(s => s.id === selectedScan);
+  const loadScans = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/scans?engagement_id=${engagementId}`, {
+        headers: { 'Authorization': 'Bearer demo-token' }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setScans(data.data || []);
+      } else {
+        loadMockScans();
+      }
+    } catch (error) {
+      console.error('Failed to load scans:', error);
+      loadMockScans();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMockScans = () => {
+    setScans([
+      {
+        id: '1',
+        name: 'Nuclei - Web Scan',
+        plugin_names: ['Nuclei'],
+        status: 'running',
+        progress_percent: 79,
+        started_at: new Date(Date.now() - 6300000).toISOString(),
+        duration_seconds: 0,
+        worker_id: 'worker-2',
+        current_stage: 'Scanning',
+        target_id: 'acme.com'
+      },
+      {
+        id: '2',
+        name: 'Subdomain Discovery',
+        plugin_names: ['Subfinder'],
+        status: 'running',
+        progress_percent: 45,
+        started_at: new Date(Date.now() - 5700000).toISOString(),
+        duration_seconds: 0,
+        worker_id: 'worker-1',
+        current_stage: 'Scanning',
+        target_id: 'acme.com'
+      },
+      {
+        id: '3',
+        name: 'DNS Enumeration',
+        plugin_names: ['dig'],
+        status: 'completed',
+        progress_percent: 100,
+        started_at: new Date(Date.now() - 16000000).toISOString(),
+        duration_seconds: 2732,
+        worker_id: 'worker-1',
+        current_stage: 'Completed',
+        target_id: 'acme.com'
+      }
+    ]);
+  };
+
+  const loadScanDetails = async (scanId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/scans/${scanId}/details`, {
+        headers: { 'Authorization': 'Bearer demo-token' }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setScanDetails(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load scan details:', error);
+    }
+  };
+
+  const startScan = async (scanId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/scans/${scanId}/start`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer demo-token' }
+      });
+      if (response.ok) {
+        loadScans();
+      }
+    } catch (error) {
+      console.error('Failed to start scan:', error);
+    }
+  };
+
+  const simulateProgress = async (scanId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/scans/${scanId}/progress`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer demo-token' }
+      });
+      if (response.ok) {
+        loadScans();
+        loadScanDetails(scanId);
+      }
+    } catch (error) {
+      console.error('Failed to update progress:', error);
+    }
+  };
+
+  const handleScanRowClick = async (scan: any) => {
+    setSelectedScan(scan);
+    await loadScanDetails(scan.id);
+  };
 
   return (
     <MainLayout title="Scans" subtitle="Monitor and manage security scans">
       <div className="mb-6 flex items-center justify-between">
         <select className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-600">
           <option>All Status</option>
-          <option>Running</option>
-          <option>Completed</option>
-          <option>Failed</option>
+          <option>running</option>
+          <option>completed</option>
+          <option>failed</option>
         </select>
         <button
           onClick={() => setShowNewScan(true)}
@@ -119,104 +144,140 @@ export default function ScansPage() {
         </button>
       </div>
 
-      <div className="rounded-lg border border-slate-700 bg-slate-950 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-700 bg-slate-900">
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Scan Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Plugin</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Target</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Progress</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Duration</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Worker</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scans.map((scan) => (
-              <tr
-                key={scan.id}
-                className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors cursor-pointer"
-                onClick={() => setSelectedScan(scan.id)}
-              >
-                <td className="px-6 py-3 text-sm text-slate-300 font-medium">{scan.name}</td>
-                <td className="px-6 py-3 text-sm text-slate-300">{scan.plugin}</td>
-                <td className="px-6 py-3 text-sm text-slate-300">{scan.target}</td>
-                <td className="px-6 py-3 text-sm">
-                  <span className={`inline-block rounded px-2 py-1 text-xs font-semibold ${scan.status === 'Running' ? 'bg-yellow-900/30 text-yellow-300' : 'bg-green-900/30 text-green-300'}`}>{scan.status}</span>
-                </td>
-                <td className="px-6 py-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-16 rounded-full bg-slate-700">
-                      <div className="h-full rounded-full bg-purple-500" style={{ width: `${scan.progress}%` }} />
-                    </div>
-                    <span className="text-xs text-slate-400">{scan.progress}%</span>
-                  </div>
-                </td>
-                <td className="px-6 py-3 text-sm text-slate-300">{scan.duration}</td>
-                <td className="px-6 py-3 text-sm text-slate-300">{scan.worker}</td>
+      {loading ? (
+        <div className="text-center py-8 text-slate-400">Loading scans...</div>
+      ) : scans.length === 0 ? (
+        <div className="text-center py-8 text-slate-400">No scans found</div>
+      ) : (
+        <div className="rounded-lg border border-slate-700 bg-slate-950 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-700 bg-slate-900">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Scan Name</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Plugin</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Progress</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Duration</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Worker</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {scans.map((scan: any) => (
+                <tr
+                  key={scan.id}
+                  className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors cursor-pointer"
+                  onClick={() => handleScanRowClick(scan)}
+                >
+                  <td className="px-6 py-3 text-sm text-slate-300 font-medium">{scan.name}</td>
+                  <td className="px-6 py-3 text-sm text-slate-300">{scan.plugin_names?.[0] || 'N/A'}</td>
+                  <td className="px-6 py-3 text-sm">
+                    <span className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
+                      scan.status === 'running' ? 'bg-yellow-900/30 text-yellow-300' :
+                      scan.status === 'completed' ? 'bg-green-900/30 text-green-300' :
+                      'bg-red-900/30 text-red-300'
+                    }`}>{scan.status}</span>
+                  </td>
+                  <td className="px-6 py-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-16 rounded-full bg-slate-700">
+                        <div className="h-full rounded-full bg-purple-500" style={{ width: `${scan.progress_percent}%` }} />
+                      </div>
+                      <span className="text-xs text-slate-400">{scan.progress_percent}%</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-3 text-sm text-slate-300">{scan.duration_seconds ? `${Math.floor(scan.duration_seconds / 60)}m` : '-'}</td>
+                  <td className="px-6 py-3 text-sm text-slate-300">{scan.worker_id || '-'}</td>
+                  <td className="px-6 py-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                    {scan.status === 'queued' && (
+                      <button
+                        onClick={() => startScan(scan.id)}
+                        className="text-xs bg-blue-600 px-2 py-1 rounded hover:bg-blue-700"
+                      >
+                        Start
+                      </button>
+                    )}
+                    {scan.status === 'running' && (
+                      <button
+                        onClick={() => simulateProgress(scan.id)}
+                        className="text-xs bg-green-600 px-2 py-1 rounded hover:bg-green-700"
+                      >
+                        Progress
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Scan Details Modal */}
-      {currentScan && (
+      {selectedScan && (
         <Modal
           isOpen={!!selectedScan}
-          onClose={() => setSelectedScan(null)}
-          title={`${currentScan.name} - Details`}
+          onClose={() => { setSelectedScan(null); setScanDetails(null); }}
+          title={`${selectedScan.name} - Details`}
         >
           <div className="space-y-4">
-            {/* Stages */}
             <div>
-              <h4 className="text-sm font-semibold text-slate-50 mb-2">Scan Stages</h4>
-              <div className="flex items-center justify-between text-xs">
-                {currentScan.stages.map((stage, idx) => (
-                  <div key={idx} className="text-center">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mx-auto mb-1 ${
-                      stage.startsWith('✓') ? 'bg-green-600 text-white' :
-                      stage.startsWith('→') ? 'bg-yellow-600 text-white' :
-                      'bg-slate-700 text-slate-300'
-                    }`}>
-                      {stage.startsWith('✓') ? '✓' : stage.startsWith('→') ? '●' : idx + 1}
+              <h4 className="text-sm font-semibold text-slate-50 mb-2">Status</h4>
+              <p className="text-slate-300">{selectedScan.status}</p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-slate-50 mb-2">Progress</h4>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-full rounded-full bg-slate-700">
+                  <div className="h-full rounded-full bg-purple-500" style={{ width: `${selectedScan.progress_percent}%` }} />
+                </div>
+                <span className="text-xs text-slate-400">{selectedScan.progress_percent}%</span>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-slate-50 mb-2">Current Stage</h4>
+              <p className="text-slate-300">{selectedScan.current_stage}</p>
+            </div>
+
+            {scanDetails?.jobs?.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-slate-50 mb-2">Execution Logs</h4>
+                <div className="bg-slate-900 rounded p-3 h-40 overflow-y-auto text-xs font-mono text-slate-300 space-y-1">
+                  {scanDetails.jobs[0].logs?.map((log: string, idx: number) => (
+                    <div key={idx}>{log}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {scanDetails?.findings?.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-slate-50 mb-2">Findings</h4>
+                <div className="space-y-2">
+                  {scanDetails.findings.map((f: any) => (
+                    <div key={f.id} className="text-xs bg-slate-900 p-2 rounded">
+                      <p className="text-slate-300">{f.title}</p>
+                      <p className="text-slate-400">{f.severity}</p>
                     </div>
-                    <span className="text-slate-400 max-w-16 truncate">{stage.replace('✓', '').replace('→', '').trim()}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Logs */}
-            <div>
-              <h4 className="text-sm font-semibold text-slate-50 mb-2">Scan Logs</h4>
-              <div className="bg-slate-900 rounded p-3 h-40 overflow-y-auto text-xs font-mono text-slate-300 space-y-1">
-                {currentScan.logs.map((log, idx) => (
-                  <div key={idx}>{log}</div>
-                ))}
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-4">
+            {scanDetails?.evidence?.length > 0 && (
               <div>
-                <p className="text-xs text-slate-500">Status</p>
-                <p className="text-sm font-semibold text-slate-300">{currentScan.status}</p>
+                <h4 className="text-sm font-semibold text-slate-50 mb-2">Evidence</h4>
+                <div className="space-y-2">
+                  {scanDetails.evidence.map((e: any) => (
+                    <div key={e.id} className="text-xs bg-slate-900 p-2 rounded text-slate-300">
+                      {e.name}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-slate-500">Progress</p>
-                <p className="text-sm font-semibold text-slate-300">{currentScan.progress}%</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Worker</p>
-                <p className="text-sm font-semibold text-slate-300">{currentScan.worker}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Duration</p>
-                <p className="text-sm font-semibold text-slate-300">{currentScan.duration}</p>
-              </div>
-            </div>
+            )}
           </div>
         </Modal>
       )}
@@ -237,7 +298,7 @@ export default function ScansPage() {
             <button
               onClick={() => {
                 setShowNewScan(false);
-                alert('Scan launched! You would see a new entry in the table.');
+                alert('Scan launched!');
               }}
               className="flex-1 rounded bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
             >

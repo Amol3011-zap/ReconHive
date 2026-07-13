@@ -1,17 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { Table } from '@/components/Table';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
 export default function EvidencePage() {
-  const [evidence] = useState([
-    { id: '1', name: 'screenshot_20250713_1422.png', type: 'Screenshot', size: '2.3 MB', finding: 'Exposed Admin Panel', uploaded: '2026-07-13 14:22' },
-    { id: '2', name: 'http_response_sql_injection.json', type: 'HTTP Response', size: '156 KB', finding: 'SQL Injection in Search', uploaded: '2026-07-12 10:15' },
-    { id: '3', name: 'dns_enumeration_results.txt', type: 'Log', size: '45 KB', finding: 'DNS Enumeration', uploaded: '2026-07-11 09:30' },
-    { id: '4', name: 'nmap_scan_results.xml', type: 'XML', size: '234 KB', finding: 'Network Scan', uploaded: '2026-07-10 16:45' },
-    { id: '5', name: 'api_response_401.json', type: 'JSON', size: '89 KB', finding: 'Missing Authentication', uploaded: '2026-07-09 13:20' },
-  ]);
+  const [evidence, setEvidence] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadEvidence = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/evidence`, {
+          headers: { 'Authorization': 'Bearer demo-token' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setEvidence(data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to load evidence:', error);
+        setEvidence([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadEvidence();
+  }, []);
 
   return (
     <MainLayout title="Evidence" subtitle="Screenshots, logs, and proof of findings">

@@ -19,29 +19,36 @@ export function AICopilot() {
     },
   ]);
 
-  const handleSend = (text: string) => {
+  const handleSend = async (text: string) => {
     if (!text.trim()) return;
 
     setMessages((prev) => [...prev, { role: 'user', text }]);
     setInput('');
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses: { [key: string]: string } = {
-        summarize: 'This engagement includes 4,231 assets across 7 active scans. Critical findings: 9 (Exposed Admin Panel, Missing SPF, Weak TLS). Estimated risk score: 7.8/10.',
-        highest: 'Top 5 high-risk assets: 1. app.acme.com (CVSS 9.1), 2. api.acme.com (CVSS 8.9), 3. db.internal (CVSS 8.2), 4. mail.acme.com (CVSS 7.9), 5. vpn.acme.com (CVSS 7.5).',
-        findings: 'Critical (9): Exposed Admin Panel, SQL Injection. High (27): Missing SPF, Weak TLS. Medium (48): Default Credentials, Missing Security Headers.',
-        changed: 'Since last assessment: 3 new critical findings, 12 findings remediated, 1 new asset added. Overall risk increased by 2%.',
-      };
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-      let response = 'I understand. Can you be more specific about what you\'d like to know?';
-      if (text.toLowerCase().includes('summarize')) response = responses.summarize;
-      else if (text.toLowerCase().includes('highest') || text.toLowerCase().includes('risk')) response = responses.highest;
-      else if (text.toLowerCase().includes('findings') || text.toLowerCase().includes('severity')) response = responses.findings;
-      else if (text.toLowerCase().includes('changed') || text.toLowerCase().includes('assessment')) response = responses.changed;
+      // Call real AI backend instead of mock data
+      const response = await fetch(`${API_BASE_URL}/ai/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer demo-token'
+        },
+        body: JSON.stringify({ message: text })
+      });
 
-      setMessages((prev) => [...prev, { role: 'assistant', text: response }]);
-    }, 800);
+      if (response.ok) {
+        const data = await response.json();
+        const aiResponse = data.data?.response || 'I understand. Can you be more specific?';
+        setMessages((prev) => [...prev, { role: 'assistant', text: aiResponse }]);
+      } else {
+        setMessages((prev) => [...prev, { role: 'assistant', text: 'Sorry, I couldn\'t process your request. The backend may not be available.' }]);
+      }
+    } catch (error) {
+      console.error('Copilot error:', error);
+      setMessages((prev) => [...prev, { role: 'assistant', text: 'Error connecting to AI service. Please try again.' }]);
+    }
   };
 
   return (

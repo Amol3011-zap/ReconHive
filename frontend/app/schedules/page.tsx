@@ -1,15 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { Table } from '@/components/Table';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
 export default function SchedulesPage() {
-  const [schedules] = useState([
-    { id: '1', name: 'Daily Scan - Acme Corp', engagement: 'Acme Corp Internal Test', frequency: 'Daily', nextRun: '2026-07-14 02:00', status: 'Active', lastRun: '2026-07-13 02:15' },
-    { id: '2', name: 'Weekly Full Scan - Beta Finance', engagement: 'Beta Finance Security Audit', frequency: 'Weekly', nextRun: '2026-07-20 10:00', status: 'Active', lastRun: '2026-07-13 10:30' },
-    { id: '3', name: 'Hourly Web Scan - DataCorp', engagement: 'DataCorp Web App Assessment', frequency: 'Hourly', nextRun: '2026-07-13 15:00', status: 'Paused', lastRun: '2026-07-13 14:00' },
-  ]);
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSchedules = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/schedules`, {
+          headers: { 'Authorization': 'Bearer demo-token' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSchedules(data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to load schedules:', error);
+        setSchedules([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSchedules();
+  }, []);
 
   return (
     <MainLayout title="Schedules" subtitle="Automated scan scheduling and management">

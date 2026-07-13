@@ -6,8 +6,11 @@ from app.services.job_service import JobService
 from app.services.plugin_service import PluginService
 from app.services.evidence_service import EvidenceService
 from app.services.finding_service import FindingService
+from app.services.worker_service import WorkerService
+from app.services.scan_executor import ScanExecutorService
 
 __all__ = [
     "EngagementService", "AssetService", "TargetService", "ScanService",
-    "JobService", "PluginService", "EvidenceService", "FindingService"
+    "JobService", "PluginService", "EvidenceService", "FindingService",
+    "WorkerService", "ScanExecutorService"
 ]

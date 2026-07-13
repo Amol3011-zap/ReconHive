@@ -16,7 +16,7 @@ class PluginRegistration(Base):
     plugin_class_path = Column(String(255), nullable=False)
     config_schema = Column(JSON)
 
-    metadata = Column(JSON)
+    custom_metadata = Column(JSON)
     capabilities = Column(JSON)
 
     enabled = Column(Boolean, default=True, index=True)
