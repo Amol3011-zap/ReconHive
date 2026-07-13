@@ -1,6 +1,9 @@
 from typing import Dict, Optional, Any, Type
+from uuid import UUID
+from sqlalchemy.orm import Session
 from app.plugins.registry import plugin_registry
 from app.plugins.base import BasePlugin, PluginStatus
+from app.plugins.config_manager import PluginConfigurationManager
 from app.utils.logger import logger
 import importlib
 
@@ -122,6 +125,90 @@ class PluginLoader:
         if not self.unload(plugin_id):
             return False
         return self.load(plugin_id, config)
+
+    def load_with_configuration(
+        self,
+        db: Session,
+        plugin_id: str,
+        config_id: Optional[UUID] = None,
+    ) -> bool:
+        """Load a plugin with its configuration from database.
+
+        If config_id is provided, loads that specific configuration.
+        Otherwise, loads the default (active) configuration.
+        """
+        try:
+            # Get plugin registration
+            from app.models.plugin import PluginRegistration
+            plugin_reg = db.query(PluginRegistration).filter(
+                PluginRegistration.name == plugin_id
+            ).first()
+
+            if not plugin_reg:
+                logger.error("plugin_not_found_in_db", plugin_id=plugin_id)
+                return False
+
+            # Get configuration
+            if config_id:
+                config = PluginConfigurationManager.get_configuration(db, config_id)
+            else:
+                config = PluginConfigurationManager.get_active_configuration(db, plugin_reg.id)
+
+            if not config:
+                logger.warning("no_configuration_found", plugin_id=plugin_id)
+                config_settings = {}
+            else:
+                config_settings = config.settings or {}
+                # Track usage
+                PluginConfigurationManager.track_configuration_usage(db, config.id)
+
+            # Load plugin with settings
+            return self.load(plugin_id, config_settings)
+
+        except Exception as e:
+            logger.error(
+                "load_with_configuration_failed",
+                plugin_id=plugin_id,
+                config_id=str(config_id) if config_id else None,
+                error=str(e),
+            )
+            return False
+
+    def get_plugin_configurations(
+        self,
+        db: Session,
+        plugin_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Get all configurations for a plugin from database"""
+        try:
+            from app.models.plugin import PluginRegistration
+            plugin_reg = db.query(PluginRegistration).filter(
+                PluginRegistration.name == plugin_id
+            ).first()
+
+            if not plugin_reg:
+                return None
+
+            configs, _ = PluginConfigurationManager.list_configurations(
+                db,
+                plugin_reg.id,
+                skip=0,
+                limit=100,
+            )
+
+            return {
+                config.name: {
+                    "id": str(config.id),
+                    "settings": config.settings,
+                    "is_default": config.is_default,
+                    "status": config.status.value,
+                }
+                for config in configs
+            }
+
+        except Exception as e:
+            logger.error("get_configurations_failed", plugin_id=plugin_id, error=str(e))
+            return None
 
 
 # Global plugin loader instance
