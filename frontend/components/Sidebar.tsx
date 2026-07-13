@@ -12,6 +12,9 @@ const menuItems = [
   { label: 'Findings', href: '/findings', icon: '🚨' },
   { label: 'Evidence', href: '/evidence', icon: '📸' },
   { label: 'Reports', href: '/reports', icon: '📄' },
+  { label: 'Plugins', href: '/plugins', icon: '🔧' },
+  { label: 'Agents', href: '/agents', icon: '⚡' },
+  { label: 'Schedules', href: '/schedules', icon: '⏱️' },
   { label: 'Settings', href: '/settings', icon: '⚙️' },
 ];
 
