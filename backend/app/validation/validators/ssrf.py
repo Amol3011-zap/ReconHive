@@ -21,12 +21,17 @@ from app.validation.base import (
     VulnerabilityType,
     SeverityLevel,
 )
+from app.validation.payloads import PayloadLibrary, PayloadManager
 
 logger = logging.getLogger(__name__)
 
 
 class SSRFValidator(BaseValidator):
     """Validates SSRF vulnerabilities"""
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        super().__init__(config)
+        self.payload_manager = PayloadManager()
 
     @property
     def validator_type(self) -> VulnerabilityType:
@@ -181,13 +186,8 @@ class SSRFValidator(BaseValidator):
     ) -> Optional[Dict[str, Any]]:
         """Test SSRF to localhost"""
 
-        localhost_urls = [
-            "http://127.0.0.1:80/",
-            "http://localhost:80/",
-            "http://0.0.0.0:80/",
-            "http://127.0.0.1/admin",
-            "http://localhost/admin",
-        ]
+        # Get payloads from library
+        localhost_urls = PayloadLibrary.SSRF.get("localhost", [])
 
         try:
             for payload in localhost_urls:
@@ -211,11 +211,12 @@ class SSRFValidator(BaseValidator):
     ) -> Optional[Dict[str, Any]]:
         """Test SSRF to cloud metadata endpoints"""
 
+        # Get payloads from library
+        cloud_payloads = PayloadLibrary.SSRF.get("cloud_metadata", [])
         metadata_urls = {
-            "AWS": "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
-            "GCP": "http://metadata.google.internal/computeMetadata/v1/",
-            "Azure": "http://169.254.169.254/metadata/instance",
-            "DigitalOcean": "http://169.254.169.254/metadata/v1/",
+            "AWS": cloud_payloads[0] if len(cloud_payloads) > 0 else "",
+            "GCP": cloud_payloads[1] if len(cloud_payloads) > 1 else "",
+            "Azure": cloud_payloads[2] if len(cloud_payloads) > 2 else "",
         }
 
         try:
@@ -241,12 +242,13 @@ class SSRFValidator(BaseValidator):
     ) -> Optional[Dict[str, Any]]:
         """Test SSRF to internal services"""
 
+        # Get payloads from library
+        internal_payloads = PayloadLibrary.SSRF.get("internal_services", [])
         internal_urls = [
-            ("Redis", "http://127.0.0.1:6379/"),
-            ("MongoDB", "http://127.0.0.1:27017/"),
-            ("MySQL", "http://127.0.0.1:3306/"),
-            ("PostgreSQL", "http://127.0.0.1:5432/"),
-            ("Admin Panel", "http://127.0.0.1:8080/admin"),
+            ("Redis", internal_payloads[0] if len(internal_payloads) > 0 else ""),
+            ("MongoDB", internal_payloads[1] if len(internal_payloads) > 1 else ""),
+            ("MySQL", internal_payloads[2] if len(internal_payloads) > 2 else ""),
+            ("PostgreSQL", internal_payloads[3] if len(internal_payloads) > 3 else ""),
         ]
 
         try:

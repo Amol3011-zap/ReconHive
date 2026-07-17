@@ -12,6 +12,7 @@ from app.validation.base import ValidatorRegistry, VulnerabilityType
 from app.validation.validators.sqli import SQLiValidator
 from app.validation.validators.xss import XSSValidator
 from app.validation.validators.ssrf import SSRFValidator
+from app.validation.payloads import PayloadLibrary
 
 logger = logging.getLogger(__name__)
 
@@ -273,4 +274,81 @@ async def validate_specific_finding(
 
     except Exception as e:
         logger.error(f"Finding validation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/payloads")
+async def get_all_payloads():
+    """Get all available payload categories"""
+    return {
+        "categories": PayloadLibrary.get_all_categories(),
+        "total_payloads": sum(PayloadLibrary.get_all_categories().values()),
+    }
+
+
+@router.get("/payloads/{category}")
+async def get_payloads_by_category(
+    category: str,
+    subcategory: str = Query("", description="Optional subcategory")
+):
+    """
+    Get payloads for a specific category.
+
+    Args:
+        category: Payload category (sql_injection, xss, ssrf, etc.)
+        subcategory: Optional subcategory (e.g., 'mysql', 'reflected')
+    """
+    payloads = PayloadLibrary.get_payloads(category, subcategory)
+
+    if not payloads:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No payloads found for {category}/{subcategory}"
+        )
+
+    return {
+        "category": category,
+        "subcategory": subcategory,
+        "total_payloads": len(payloads),
+        "payloads": payloads,
+    }
+
+
+@router.post("/test-payload")
+async def test_payload(
+    target_url: str,
+    vulnerability_type: str,
+    payload: str,
+    parameter: str = "",
+    method: str = Query("GET", regex="^(GET|POST)$"),
+):
+    """
+    Test a specific payload against a target.
+
+    Args:
+        target_url: Target URL
+        vulnerability_type: Type of vulnerability
+        payload: Payload to test
+        parameter: Parameter to inject into
+        method: HTTP method
+    """
+
+    if not _validator_registry:
+        raise HTTPException(status_code=503, detail="Validators not initialized")
+
+    try:
+        # This would require custom implementation
+        # For now, return the configuration
+        return {
+            "target_url": target_url,
+            "vulnerability_type": vulnerability_type,
+            "payload": payload,
+            "parameter": parameter,
+            "method": method,
+            "status": "configured",
+            "message": "Ready to test payload",
+        }
+
+    except Exception as e:
+        logger.error(f"Payload test error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

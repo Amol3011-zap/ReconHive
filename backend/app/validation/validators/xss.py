@@ -27,6 +27,7 @@ from app.validation.base import (
     VulnerabilityType,
     SeverityLevel,
 )
+from app.validation.payloads import PayloadLibrary, PayloadManager
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ class XSSValidator(BaseValidator):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
         self.xss_type = "reflected"  # reflected, stored, dom
+        self.payload_manager = PayloadManager()
 
     @property
     def validator_type(self) -> VulnerabilityType:
@@ -95,15 +97,8 @@ class XSSValidator(BaseValidator):
         if not parameter:
             return result
 
-        # Safe XSS payloads that prove execution without malicious behavior
-        payloads = [
-            '<img src=x onerror="1+1">',
-            '<svg onload="1+1">',
-            '<body onload="1+1">',
-            '"><script>1+1</script>',
-            'javascript:1+1',
-            '<iframe src="javascript:1+1">',
-        ]
+        # Get payloads from library
+        payloads = PayloadLibrary.get_xss_payloads("reflected")
 
         try:
             for payload in payloads:

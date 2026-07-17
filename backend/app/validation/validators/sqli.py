@@ -23,12 +23,18 @@ from app.validation.base import (
     SeverityLevel,
     HTTPMessage,
 )
+from app.validation.payloads import PayloadLibrary, PayloadManager
 
 logger = logging.getLogger(__name__)
 
 
 class SQLiValidator(BaseValidator):
     """Validates SQL injection vulnerabilities"""
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        super().__init__(config)
+        self.payload_manager = PayloadManager()
+        self.database_type = "mysql"
 
     @property
     def validator_type(self) -> VulnerabilityType:
@@ -148,13 +154,8 @@ class SQLiValidator(BaseValidator):
         if not parameter:
             return None
 
-        # SQL error indicators
-        error_payloads = [
-            "' OR '1'='1",
-            "1' OR '1'='1",
-            "admin' --",
-            "' OR 1=1 --",
-        ]
+        # Get payloads from library
+        error_payloads = PayloadLibrary.get_sql_payloads(self.database_type)
 
         try:
             for payload in error_payloads:
