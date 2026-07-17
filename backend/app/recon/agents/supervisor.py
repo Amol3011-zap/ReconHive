@@ -9,6 +9,11 @@ import logging
 import time
 
 from app.recon.agents.base import BaseReconAgent, AgentConfig, AgentResult
+from app.recon.llm_integration import LLMClient, LLMConfig, LLMProvider
+from app.tools.executor import ToolExecutor
+from app.tools.implementations import (
+    SubfinderTool, DNSXTool, HTTPXTool, NaabuTool, NucleiTool
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +31,19 @@ class SupervisorAgent(BaseReconAgent):
     - Handle retries and failures
     """
 
-    def __init__(self, config: Optional[AgentConfig] = None):
+    def __init__(
+        self,
+        config: Optional[AgentConfig] = None,
+        llm_config: Optional[LLMConfig] = None,
+        tool_executor: Optional[ToolExecutor] = None
+    ):
         super().__init__(config)
+        self.llm_client = None
+        self.tool_executor = tool_executor or self._initialize_tools()
+
+        if llm_config:
+            self.llm_client = LLMClient(llm_config)
+
         self.workflow_steps = [
             "passive_recon",
             "dns_resolution",
@@ -43,6 +59,16 @@ class SupervisorAgent(BaseReconAgent):
             "evidence_collection",
             "report_generation",
         ]
+
+    def _initialize_tools(self) -> ToolExecutor:
+        """Initialize default tool executor"""
+        executor = ToolExecutor()
+        executor.register_tool(SubfinderTool())
+        executor.register_tool(DNSXTool())
+        executor.register_tool(HTTPXTool())
+        executor.register_tool(NaabuTool())
+        executor.register_tool(NucleiTool())
+        return executor
 
     @property
     def agent_name(self) -> str:
