@@ -4,6 +4,7 @@ from app.routes.api import router as api_router
 from app.routes.workflow import router as workflow_router
 from app.ai.routers.copilot import router as ai_router
 from app.workers.routes import router as workers_router
+from app.recon.routes import router as recon_router
 from app.config import settings
 from app.utils.middleware import RequestIdMiddleware
 import os
@@ -28,6 +29,7 @@ app.include_router(api_router)
 app.include_router(workflow_router)
 app.include_router(ai_router)
 app.include_router(workers_router)
+app.include_router(recon_router)
 
 @app.get("/health")
 def health_check():
