@@ -61,7 +61,7 @@ services:
     networks:
       - reconhive-net
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://api:8000
 
   # ===== DEVELOPER TOOLS =====
 
